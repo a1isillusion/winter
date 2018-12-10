@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans>
+     <bean name="test1" class="nullguo.winter.Test">
+           <property name="a" value="astring"></property>
+           <property name="b" value="18"></property>
+     </bean>
+
+</beans>
