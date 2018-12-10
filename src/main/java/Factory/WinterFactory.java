@@ -1,6 +1,7 @@
 package Factory;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
@@ -36,34 +37,49 @@ public static void parse(String path) {
 }
 public static void initBeans() {
 	for(String key:beanDefinitionMap.keySet()) {
-		initBean(beanDefinitionMap.get(key));
+		if(!beanDefinitionMap.get(key).getIsToBean()) {
+			initBean(beanDefinitionMap.get(key));
+		}
 	}
 	earlyBeans.clear();
 }
 public static void initBean(BeanDefinition beanDefinition) {
 	try {
+		Class<?> beanClass=Class.forName(beanDefinition.getClassName());
+		Object bean=null;
 		if(beanDefinition.getConstructorInit()==0) {
-			Class<?> beanClass=Class.forName(beanDefinition.getClassName());
-			Object bean=beanClass.newInstance();
+		    bean=beanClass.newInstance();
 			for(String key:beanDefinition.getAttributes().keySet()) {
 				Field field=beanClass.getDeclaredField(key);
-				if(field.getType().getName().equals("int")) {
-					field.set(bean,Integer.parseInt(beanDefinition.getAttribute(key).toString()));
-				}
-				else {
-					field.set(bean,beanDefinition.getAttribute(key));
-				}
+				field.set(bean,convertValue(field.getType().getName(), beanDefinition.getAttribute(key).getValue()));
 			}
-			singletonBeans.put(beanDefinition.getBeanName(),bean);
 		}
 		else {
-			
+			Class<?>[] parameterTypes=new Class<?>[beanDefinition.getAttributes().size()];
+			Object[] args=new Object[beanDefinition.getAttributes().size()];
+			int i=0;
+			for(String key:beanDefinition.getAttributes().keySet()) {
+				parameterTypes[i]=Class.forName(key);
+                String[] keyArray=key.split("\\.");
+                String type=keyArray[keyArray.length-1];
+				args[i]=convertValue(type, beanDefinition.getAttribute(key).getValue());				
+				i++;
+			}
+			Constructor<?> constructor=beanClass.getConstructor(parameterTypes);
+		    bean=constructor.newInstance(args);
 		}
+		beanDefinition.setIsToBean(true);
+		singletonBeans.put(beanDefinition.getBeanName(),bean);
 		
 	}catch (Exception e) {
 		e.printStackTrace();
 	}
-	
+}
+public static Object convertValue(String type,String value) {//转换方法,待修改
+	if(type.equals("int")||type.equals("Integer")) {
+		return Integer.parseInt(value);
+	}
+	return value;
 }
 public static HashMap<String, Object> getEarlyBeans() {
 	return earlyBeans;

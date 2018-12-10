@@ -4,5 +4,8 @@
            <property name="a" value="astring"></property>
            <property name="b" value="18"></property>
      </bean>
-
+     <bean name="test2" class="nullguo.winter.Test">
+        <constructor-arg  type="java.lang.String" value="1"></constructor-arg>
+        <constructor-arg  type="java.lang.Integer" value="2"></constructor-arg>
+     </bean>
 </beans>

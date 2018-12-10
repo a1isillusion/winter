@@ -6,7 +6,7 @@ public int b;
 public Test() {
 	
 }
-public Test(String a,int b) {
+public Test(String a,Integer b) {
 	this.a=a;
 	this.b=b;
 }
