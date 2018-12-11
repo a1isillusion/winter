@@ -131,15 +131,15 @@ public static Object convertValue(String type,String value) {//转换方法,待�
 	return value;
 }
 public static Object handleBeanAfterInit(BeanDefinition beanDefinition,Object bean) throws Exception {
-	if(bean.getClass().isAssignableFrom(BeanNameAware.class)) {
+	if(bean instanceof BeanNameAware) {
 		Method setBeanName=bean.getClass().getMethod("setBeanName",new Class<?>[]{String.class});
 		setBeanName.invoke(bean, new Object[]{beanDefinition.getBeanName()});
 	}
-	if(bean.getClass().isAssignableFrom(BeanFactoryAware.class)) {
-		Method setBeanFactory=bean.getClass().getMethod("setBeanFactory",new Class<?>[]{WinterFactory.class});
+	if(bean instanceof BeanFactoryAware) {
+		Method setBeanFactory=bean.getClass().getMethod("setBeanFactroy",new Class<?>[]{WinterFactory.class});
 		setBeanFactory.invoke(bean, new Object[]{new WinterFactory()});
 	}
-	if(bean.getClass().isAssignableFrom(ApplicationContextAware.class)) {
+	if(bean instanceof ApplicationContextAware) {
 		Method setApplicationContext=bean.getClass().getMethod("setApplicationContext",new Class<?>[]{ApplicationContext.class});
 		setApplicationContext.invoke(bean, new Object[]{new ApplicationContext()});
 	}
@@ -149,9 +149,9 @@ public static Object handleBeanAfterInit(BeanDefinition beanDefinition,Object be
 		bean=postProcessBeforeInitialization.invoke(processor, new Object[]{bean,beanDefinition.getBeanName()});
 	    }
 	}
-	if(bean.getClass().isAssignableFrom(InitializingBean.class)) {
+	if(bean instanceof InitializingBean) {
 		Method afterPropertiesSet=bean.getClass().getMethod("afterPropertiesSet",new Class<?>[]{});
-		bean=afterPropertiesSet.invoke(bean, new Object[]{});
+		afterPropertiesSet.invoke(bean, new Object[]{});
 	}
 	if(beanDefinition.getInitMethod()!=null) {
 		Method initMethod=bean.getClass().getMethod(beanDefinition.getInitMethod(),new Class<?>[]{});
@@ -160,7 +160,7 @@ public static Object handleBeanAfterInit(BeanDefinition beanDefinition,Object be
 	if(!bean.getClass().isAssignableFrom(BeanPostProcessor.class)) {
 	for(BeanPostProcessor processor:processorList) {
 		Method postProcessAfterInitialization=processor.getClass().getMethod("postProcessAfterInitialization",new Class<?>[]{Object.class,String.class});
-		postProcessAfterInitialization.invoke(processor, new Object[]{bean,beanDefinition.getBeanName()});
+		bean=postProcessAfterInitialization.invoke(processor, new Object[]{bean,beanDefinition.getBeanName()});
 	    }
 	}
 	return bean;
@@ -170,7 +170,7 @@ public static void close() {
 	for(String key:beanDefinitionMap.keySet()) {
 		Object bean=singletonBeans.get(key);
 		BeanDefinition beanDefinition=beanDefinitionMap.get(key);
-		if(bean.getClass().isAssignableFrom(DisposableBean.class)) {
+		if(bean instanceof DisposableBean) {
 			Method destroy = bean.getClass().getMethod("destroy",new Class<?>[]{});
 			destroy.invoke(bean, new Object[]{});
 		}
