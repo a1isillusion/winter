@@ -59,7 +59,7 @@ public static void initBeans() {
 }
 public static void initBean(BeanDefinition beanDefinition) {
 	try {
-		if(beanDefinition.getScope().equals("singleton")) {
+		if(beanDefinition.getScope().equals("prototype")) {
 			Class<?> beanClass=Class.forName(beanDefinition.getClassName());
 			Object bean=null;
 			if(beanDefinition.getConstructorInit()==0) {//不用构造函数，反射加载实例bean

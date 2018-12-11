@@ -14,7 +14,7 @@ public void parse(Element element) throws Exception {
 		BeanDefinition beanDefinition=new BeanDefinition();
 		beanDefinition.setBeanName(element.attributeValue("name"));
 		beanDefinition.setClassName(element.attributeValue("class"));
-		beanDefinition.setScope(element.attributeValue("scope")!=null?element.attributeValue("scope"):"singleton");
+		beanDefinition.setScope(element.attributeValue("scope")!=null?element.attributeValue("scope"):"prototype");
 		beanDefinition.setIsProcessor(BeanPostProcessor.class.isAssignableFrom(Class.forName(element.attributeValue("class"))));
 		beanDefinition.setInitMethod(element.attributeValue("init-method"));
 		beanDefinition.setDestroyMethod(element.attributeValue("destroy-method"));
