@@ -17,6 +17,7 @@ public class App
         WinterFactory.parse("C:/Users/Administrator/eclipse-workspace/winter/src/main/java/winter.xml");
         WinterFactory.initBeans();
         System.out.println(WinterFactory.getSingletonBean("test1"));
-        System.out.println(WinterFactory.getSingletonBean("test3"));		
+        System.out.println(WinterFactory.getSingletonBean("test3"));
+        WinterFactory.close();
     }
 }

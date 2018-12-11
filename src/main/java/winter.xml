@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans>
-     <bean name="test1" class="nullguo.winter.Test">
+     <bean name="test1" class="nullguo.winter.Test" init-method="initMethod" destroy-method="destroyMethod">
            <property name="a" value="astring"></property>
            <property name="b" value="18"></property>
            <property name="c" ref="test3"></property>

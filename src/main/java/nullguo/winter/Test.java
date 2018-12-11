@@ -43,6 +43,11 @@ public void setBeanName(String beanName) {
 	System.out.println("setBeanName");
 	
 }
-
+public void initMethod() {
+	System.out.println("initMethod");
+}
+public void destroyMethod() {
+	System.out.println("destroyMethod");
+}
 
 }
