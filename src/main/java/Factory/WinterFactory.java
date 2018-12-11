@@ -41,36 +41,67 @@ public static void initBeans() {
 			initBean(beanDefinitionMap.get(key));
 		}
 	}
-	earlyBeans.clear();
+	earlyBeans.clear();//全部bean加载完成,清空earlyBeans
 }
 public static void initBean(BeanDefinition beanDefinition) {
 	try {
-		Class<?> beanClass=Class.forName(beanDefinition.getClassName());
-		Object bean=null;
-		if(beanDefinition.getConstructorInit()==0) {
-		    bean=beanClass.newInstance();
-			for(String key:beanDefinition.getAttributes().keySet()) {
-				Field field=beanClass.getDeclaredField(key);
-				field.set(bean,convertValue(field.getType().getName(), beanDefinition.getAttribute(key).getValue()));
+		if(beanDefinition.getScope().equals("singleton")) {
+			Class<?> beanClass=Class.forName(beanDefinition.getClassName());
+			Object bean=null;
+			if(beanDefinition.getConstructorInit()==0) {//不用构造函数，反射加载实例bean
+			    bean=beanClass.newInstance();
+			    earlyBeans.put(beanDefinition.getBeanName(),bean);//解决循环引用,把未完成加载的bean先放到earlyBeans中
+				for(String key:beanDefinition.getAttributes().keySet()) {
+					Field field=beanClass.getDeclaredField(key);
+					if(beanDefinition.getAttribute(key).getName().equals("value")) {//赋值value
+					field.set(bean,convertValue(field.getType().getName(), beanDefinition.getAttribute(key).getValue()));	
+					}
+					else {//赋值ref
+						if(singletonBeans.containsKey(beanDefinition.getAttribute(key).getValue())) {//从singletonBeans获取对应的实例
+							field.set(bean,singletonBeans.get(beanDefinition.getAttribute(key).getValue()));	
+						}
+						else if(earlyBeans.containsKey(beanDefinition.getAttribute(key).getValue())) {//从earlyBeans获取对应的实例
+							field.set(bean,earlyBeans.get(beanDefinition.getAttribute(key).getValue()));	
+						}
+						else {//singletonBeans和earlyBeans都没有对应的实例,则加载对应的的实例到两个Beans集合中，再赋值
+							initBean(beanDefinitionMap.get(beanDefinition.getAttribute(key).getValue()));
+							field.set(bean,earlyBeans.get(beanDefinition.getAttribute(key).getValue()));
+						}			
+					}
+				}
 			}
-		}
-		else {
-			Class<?>[] parameterTypes=new Class<?>[beanDefinition.getAttributes().size()];
-			Object[] args=new Object[beanDefinition.getAttributes().size()];
-			int i=0;
-			for(String key:beanDefinition.getAttributes().keySet()) {
-				parameterTypes[i]=Class.forName(key);
-                String[] keyArray=key.split("\\.");
-                String type=keyArray[keyArray.length-1];
-				args[i]=convertValue(type, beanDefinition.getAttribute(key).getValue());				
-				i++;
+			else {//使用构造函数,构造函数加载实例bean
+				Class<?>[] parameterTypes=new Class<?>[beanDefinition.getAttributes().size()];
+				Object[] args=new Object[beanDefinition.getAttributes().size()];
+				int i=0;
+				for(String key:beanDefinition.getAttributes().keySet()) {
+					parameterTypes[i]=Class.forName(key);
+	                String[] keyArray=key.split("\\.");
+	                String type=keyArray[keyArray.length-1];
+	                if(beanDefinition.getAttribute(key).getName().equals("value")) {
+	                args[i]=convertValue(type, beanDefinition.getAttribute(key).getValue());	
+	                }
+	                else {
+	                	if(singletonBeans.containsKey(beanDefinition.getAttribute(key).getValue())) {//从singletonBeans获取对应的实例
+	                		args[i]=singletonBeans.get(beanDefinition.getAttribute(key).getValue());	
+						}
+						else if(earlyBeans.containsKey(beanDefinition.getAttribute(key).getValue())) {//从earlyBeans获取对应的实例
+							args[i]=earlyBeans.get(beanDefinition.getAttribute(key).getValue());	
+						}
+						else {//singletonBeans和earlyBeans都没有对应的实例,则加载对应的的实例到两个Beans集合中，再赋值
+							initBean(beanDefinitionMap.get(beanDefinition.getAttribute(key).getValue()));
+							args[i]=earlyBeans.get(beanDefinition.getAttribute(key).getValue());
+						}
+					}				
+					i++;
+				}
+				Constructor<?> constructor=beanClass.getConstructor(parameterTypes);
+			    bean=constructor.newInstance(args);
+			    earlyBeans.put(beanDefinition.getBeanName(),bean);//解决循环引用,把未完成加载的bean先放到earlyBeans中
 			}
-			Constructor<?> constructor=beanClass.getConstructor(parameterTypes);
-		    bean=constructor.newInstance(args);
+			beanDefinition.setIsToBean(true);
+			singletonBeans.put(beanDefinition.getBeanName(),bean);
 		}
-		beanDefinition.setIsToBean(true);
-		singletonBeans.put(beanDefinition.getBeanName(),bean);
-		
 	}catch (Exception e) {
 		e.printStackTrace();
 	}

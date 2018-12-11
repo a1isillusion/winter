@@ -13,18 +13,26 @@ public void parse(Element element) {
 		BeanDefinition beanDefinition=new BeanDefinition();
 		beanDefinition.setBeanName(element.attributeValue("name"));
 		beanDefinition.setClassName(element.attributeValue("class"));
-		beanDefinition.setScope(element.attributeValue("scope"));
+		beanDefinition.setScope(element.attributeValue("scope")!=null?element.attributeValue("scope"):"singleton");
 		beanDefinition.setInitMethod(element.attributeValue("init-method"));
 		beanDefinition.setDestroyMethod(element.attributeValue("destroy-method"));
 		List<Element> childElements = element.elements();
 		for(Element childelement:childElements) {
 			if(childelement.getName().equals("property")) {
 				beanDefinition.setConstructorInit(0);
-				beanDefinition.setAttribute(childelement.attributeValue("name"), childelement.attribute("value"));
+				if( childelement.attribute("ref")!=null) {
+					beanDefinition.setAttribute(childelement.attributeValue("name"), childelement.attribute("ref"));
+				}else {
+					beanDefinition.setAttribute(childelement.attributeValue("name"), childelement.attribute("value"));
+				}	
 			}
 			else if(childelement.getName().equals("constructor-arg")) {
 				beanDefinition.setConstructorInit(1);
-				beanDefinition.setAttribute(childelement.attributeValue("type"), childelement.attribute("value"));
+				if( childelement.attribute("ref")!=null) {
+					beanDefinition.setAttribute(childelement.attributeValue("type"), childelement.attribute("ref"));
+				}else {
+					beanDefinition.setAttribute(childelement.attributeValue("type"), childelement.attribute("value"));
+				}	
 			}
 			
 		}
