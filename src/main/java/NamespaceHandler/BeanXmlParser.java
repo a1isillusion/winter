@@ -6,14 +6,16 @@ import org.dom4j.Element;
 
 import Factory.BeanDefinition;
 import Factory.WinterFactory;
+import lifecycle.BeanPostProcessor;
 
 public class BeanXmlParser implements XmlParser {
 @SuppressWarnings("unchecked")
-public void parse(Element element) {
+public void parse(Element element) throws Exception {
 		BeanDefinition beanDefinition=new BeanDefinition();
 		beanDefinition.setBeanName(element.attributeValue("name"));
 		beanDefinition.setClassName(element.attributeValue("class"));
 		beanDefinition.setScope(element.attributeValue("scope")!=null?element.attributeValue("scope"):"singleton");
+		beanDefinition.setIsProcessor(BeanPostProcessor.class.isAssignableFrom(Class.forName(element.attributeValue("class"))));
 		beanDefinition.setInitMethod(element.attributeValue("init-method"));
 		beanDefinition.setDestroyMethod(element.attributeValue("destroy-method"));
 		List<Element> childElements = element.elements();

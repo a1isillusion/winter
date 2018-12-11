@@ -13,6 +13,7 @@ public String scope;
 public int constructorInit;
 public boolean isRef;
 public boolean isToBean;
+public boolean isProcessor;
 public String initMethod;
 public String destroyMethod;
 public BeanDefinition() {
@@ -59,6 +60,12 @@ public boolean getIsToBean() {
 }
 public void setIsToBean(boolean isToBean) {
 	this.isToBean = isToBean;
+}
+public boolean getIsProcessor() {
+	return isProcessor;
+}
+public void setIsProcessor(boolean isProcessor) {
+	this.isProcessor = isProcessor;
 }
 public String getInitMethod() {
 	return initMethod;

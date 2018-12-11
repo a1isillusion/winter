@@ -14,4 +14,5 @@
            <property name="b" value="20"></property>
            <property name="c" ref="test1"></property>
      </bean>
+     <bean name="aop" class="aop.AutoProxyCreater"></bean>
 </beans>

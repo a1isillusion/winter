@@ -3,6 +3,8 @@ package Factory;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -12,8 +14,15 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 
 import NamespaceHandler.WinterNamespaceHandler;
+import lifecycle.ApplicationContextAware;
+import lifecycle.BeanFactoryAware;
+import lifecycle.BeanNameAware;
+import lifecycle.BeanPostProcessor;
+import lifecycle.DisposableBean;
+import lifecycle.InitializingBean;
 
 public class WinterFactory {
+public static ArrayList<BeanPostProcessor>processorList=new ArrayList<BeanPostProcessor>();
 public static HashMap<String,Object> earlyBeans=new HashMap<String, Object>();
 public static HashMap<String,Object> singletonBeans=new HashMap<String, Object>();
 public static HashMap<String,BeanDefinition> beanDefinitionMap=new HashMap<String, BeanDefinition>();
@@ -30,12 +39,17 @@ public static void parse(String path) {
 		for(Element element:childElements) {
 			WinterNamespaceHandler.getParserMap().get(element.getName()).parse(element);
 		}
-	} catch (DocumentException e) {
+	} catch (Exception e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
 	}
 }
 public static void initBeans() {
+	for(String key:beanDefinitionMap.keySet()) {
+		if(!beanDefinitionMap.get(key).getIsToBean()&&beanDefinitionMap.get(key).getIsProcessor()) {
+			initBean(beanDefinitionMap.get(key));
+		}
+	}
 	for(String key:beanDefinitionMap.keySet()) {
 		if(!beanDefinitionMap.get(key).getIsToBean()) {
 			initBean(beanDefinitionMap.get(key));
@@ -101,6 +115,10 @@ public static void initBean(BeanDefinition beanDefinition) {
 			}
 			beanDefinition.setIsToBean(true);
 			singletonBeans.put(beanDefinition.getBeanName(),bean);
+			if(beanDefinition.getIsProcessor()) {
+				processorList.add((BeanPostProcessor)bean);
+			}
+			handleBeanAfterInit(beanDefinition, bean);//bean实例已经注册完成，继续完成bean的生命周期
 		}
 	}catch (Exception e) {
 		e.printStackTrace();
@@ -111,6 +129,57 @@ public static Object convertValue(String type,String value) {//转换方法,待�
 		return Integer.parseInt(value);
 	}
 	return value;
+}
+public static void handleBeanAfterInit(BeanDefinition beanDefinition,Object bean) throws Exception {
+	if(bean.getClass().isAssignableFrom(BeanNameAware.class)) {
+		Method setBeanName=bean.getClass().getMethod("setBeanName",new Class<?>[]{String.class});
+		setBeanName.invoke(bean, new Object[]{beanDefinition.getBeanName()});
+	}
+	if(bean.getClass().isAssignableFrom(BeanFactoryAware.class)) {
+		Method setBeanFactory=bean.getClass().getMethod("setBeanFactory",new Class<?>[]{WinterFactory.class});
+		setBeanFactory.invoke(bean, new Object[]{new WinterFactory()});
+	}
+	if(bean.getClass().isAssignableFrom(ApplicationContextAware.class)) {
+		Method setApplicationContext=bean.getClass().getMethod("setApplicationContext",new Class<?>[]{ApplicationContext.class});
+		setApplicationContext.invoke(bean, new Object[]{new ApplicationContext()});
+	}
+	for(BeanPostProcessor processor:processorList) {
+		Method postProcessBeforeInitialization=processor.getClass().getMethod("postProcessBeforeInitialization",new Class<?>[]{Object.class,String.class});
+		postProcessBeforeInitialization.invoke(processor, new Object[]{bean,beanDefinition.getBeanName()});
+	}
+	if(bean.getClass().isAssignableFrom(InitializingBean.class)) {
+		Method afterPropertiesSet=bean.getClass().getMethod("afterPropertiesSet",new Class<?>[]{});
+		afterPropertiesSet.invoke(bean, new Object[]{});
+	}
+	if(beanDefinition.getInitMethod()!=null) {
+		Method initMethod=bean.getClass().getMethod(beanDefinition.getInitMethod(),new Class<?>[]{});
+		initMethod.invoke(bean, new Object[]{});
+	}
+	for(BeanPostProcessor processor:processorList) {
+		Method postProcessAfterInitialization=processor.getClass().getMethod("postProcessAfterInitialization",new Class<?>[]{Object.class,String.class});
+		postProcessAfterInitialization.invoke(processor, new Object[]{bean,beanDefinition.getBeanName()});
+	}
+}
+public static void close() {
+	try {
+	for(String key:beanDefinitionMap.keySet()) {
+		Object bean=singletonBeans.get(key);
+		BeanDefinition beanDefinition=beanDefinitionMap.get(key);
+		if(bean.getClass().isAssignableFrom(DisposableBean.class)) {
+			Method destroy = bean.getClass().getMethod("destroy",new Class<?>[]{});
+			destroy.invoke(bean, new Object[] {});
+		}
+		if(beanDefinition.destroyMethod!=null) {
+			Method destoryMethod=bean.getClass().getMethod(beanDefinition.getDestroyMethod(),new Class<?>[]{});
+			destoryMethod.invoke(bean, new Object[]{});
+		}
+	}
+	beanDefinitionMap.clear();
+	singletonBeans.clear();
+	processorList.clear();
+	} catch (Exception e) {
+		e.printStackTrace();
+	}
 }
 public static HashMap<String, Object> getEarlyBeans() {
 	return earlyBeans;
