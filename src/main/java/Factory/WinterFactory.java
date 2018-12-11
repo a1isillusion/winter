@@ -113,12 +113,12 @@ public static void initBean(BeanDefinition beanDefinition) {
 			    bean=constructor.newInstance(args);
 			    earlyBeans.put(beanDefinition.getBeanName(),bean);//解决循环引用,把未完成加载的bean先放到earlyBeans中
 			}
+			bean=handleBeanAfterInit(beanDefinition, bean);//bean实例已经加载完成，继续完成bean的生命周期
 			beanDefinition.setIsToBean(true);
 			singletonBeans.put(beanDefinition.getBeanName(),bean);
 			if(beanDefinition.getIsProcessor()) {
 				processorList.add((BeanPostProcessor)bean);
 			}
-			handleBeanAfterInit(beanDefinition, bean);//bean实例已经注册完成，继续完成bean的生命周期
 		}
 	}catch (Exception e) {
 		e.printStackTrace();
@@ -130,7 +130,7 @@ public static Object convertValue(String type,String value) {//转换方法,待�
 	}
 	return value;
 }
-public static void handleBeanAfterInit(BeanDefinition beanDefinition,Object bean) throws Exception {
+public static Object handleBeanAfterInit(BeanDefinition beanDefinition,Object bean) throws Exception {
 	if(bean.getClass().isAssignableFrom(BeanNameAware.class)) {
 		Method setBeanName=bean.getClass().getMethod("setBeanName",new Class<?>[]{String.class});
 		setBeanName.invoke(bean, new Object[]{beanDefinition.getBeanName()});
@@ -143,22 +143,27 @@ public static void handleBeanAfterInit(BeanDefinition beanDefinition,Object bean
 		Method setApplicationContext=bean.getClass().getMethod("setApplicationContext",new Class<?>[]{ApplicationContext.class});
 		setApplicationContext.invoke(bean, new Object[]{new ApplicationContext()});
 	}
-	for(BeanPostProcessor processor:processorList) {
+	if(!bean.getClass().isAssignableFrom(BeanPostProcessor.class)) {
+		for(BeanPostProcessor processor:processorList) {
 		Method postProcessBeforeInitialization=processor.getClass().getMethod("postProcessBeforeInitialization",new Class<?>[]{Object.class,String.class});
-		postProcessBeforeInitialization.invoke(processor, new Object[]{bean,beanDefinition.getBeanName()});
+		bean=postProcessBeforeInitialization.invoke(processor, new Object[]{bean,beanDefinition.getBeanName()});
+	    }
 	}
 	if(bean.getClass().isAssignableFrom(InitializingBean.class)) {
 		Method afterPropertiesSet=bean.getClass().getMethod("afterPropertiesSet",new Class<?>[]{});
-		afterPropertiesSet.invoke(bean, new Object[]{});
+		bean=afterPropertiesSet.invoke(bean, new Object[]{});
 	}
 	if(beanDefinition.getInitMethod()!=null) {
 		Method initMethod=bean.getClass().getMethod(beanDefinition.getInitMethod(),new Class<?>[]{});
 		initMethod.invoke(bean, new Object[]{});
 	}
+	if(!bean.getClass().isAssignableFrom(BeanPostProcessor.class)) {
 	for(BeanPostProcessor processor:processorList) {
 		Method postProcessAfterInitialization=processor.getClass().getMethod("postProcessAfterInitialization",new Class<?>[]{Object.class,String.class});
 		postProcessAfterInitialization.invoke(processor, new Object[]{bean,beanDefinition.getBeanName()});
+	    }
 	}
+	return bean;
 }
 public static void close() {
 	try {
@@ -167,7 +172,7 @@ public static void close() {
 		BeanDefinition beanDefinition=beanDefinitionMap.get(key);
 		if(bean.getClass().isAssignableFrom(DisposableBean.class)) {
 			Method destroy = bean.getClass().getMethod("destroy",new Class<?>[]{});
-			destroy.invoke(bean, new Object[] {});
+			destroy.invoke(bean, new Object[]{});
 		}
 		if(beanDefinition.destroyMethod!=null) {
 			Method destoryMethod=bean.getClass().getMethod(beanDefinition.getDestroyMethod(),new Class<?>[]{});
