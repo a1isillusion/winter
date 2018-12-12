@@ -14,6 +14,7 @@ public int constructorInit;
 public boolean isRef;
 public boolean isToBean;
 public boolean isProcessor;
+public boolean isAdvisor;
 public String initMethod;
 public String destroyMethod;
 public BeanDefinition() {
@@ -66,6 +67,13 @@ public boolean getIsProcessor() {
 }
 public void setIsProcessor(boolean isProcessor) {
 	this.isProcessor = isProcessor;
+}
+
+public boolean getIsAdvisor() {
+	return isAdvisor;
+}
+public void setIsAdvisor(boolean isAdvisor) {
+	this.isAdvisor = isAdvisor;
 }
 public String getInitMethod() {
 	return initMethod;

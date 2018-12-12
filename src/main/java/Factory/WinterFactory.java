@@ -46,6 +46,11 @@ public static void parse(String path) {
 }
 public static void initBeans() {
 	for(String key:beanDefinitionMap.keySet()) {
+		if(!beanDefinitionMap.get(key).getIsToBean()&&beanDefinitionMap.get(key).getIsAdvisor()) {
+			initBean(beanDefinitionMap.get(key));
+		}
+	}
+	for(String key:beanDefinitionMap.keySet()) {
 		if(!beanDefinitionMap.get(key).getIsToBean()&&beanDefinitionMap.get(key).getIsProcessor()) {
 			initBean(beanDefinitionMap.get(key));
 		}
