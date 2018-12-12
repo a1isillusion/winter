@@ -6,6 +6,7 @@ public class WinterNamespaceHandler {
 public static HashMap<String,XmlParser> parserMap=new HashMap<String, XmlParser>();
 public static void init() {
 	parserMap.put("bean", new BeanXmlParser());
+	parserMap.put("aopconfig", new AopXmlParser());
 }
 public static HashMap<String, XmlParser> getParserMap() {
 	return parserMap;

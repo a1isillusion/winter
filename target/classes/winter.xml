@@ -15,4 +15,11 @@
            <property name="c" ref="test1"></property>
      </bean>
      <bean name="aop" class="aop.AutoProxyCreater"></bean>
+     <aopconfig>
+        <aopaspect id="aop" class="nullguo.winter.AopTest">
+           <aoppointcut id="addAllMethod" expression="execution(* nullguo.winter.Test.toString(..))" />
+           <aopbefore method="before" pointcut-ref="addAllMethod" />
+           <aopafter method="before" pointcut-ref="addAllMethod" />
+        </aopaspect>
+      </aopconfig>
 </beans>
