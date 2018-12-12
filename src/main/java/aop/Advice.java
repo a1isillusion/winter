@@ -22,6 +22,12 @@ public Object invoke(MethodInvocation invocation) throws Exception {
 	if(type.equals("around")) {
 		return aroundInvoke(invocation);
 	}
+	if(type.equals("afterReturning")) {
+		return afterReturningInvoke(invocation);
+	}
+	if(type.equals("afterThrowing")) {
+		return afterThrowingInvoke(invocation);
+	}
 	return null;
 }
 public Object beforeInvoke(MethodInvocation invocation) throws Exception {
@@ -37,6 +43,25 @@ public Object aroundInvoke(MethodInvocation invocation) throws Exception {
 	reflectMethodInvoke();
 	Object result=invocation.proceed();
 	reflectMethodInvoke();
+	return result;
+}
+public Object afterReturningInvoke(MethodInvocation invocation) throws Exception {
+	Object result=null;
+	try {
+		result=invocation.proceed();
+	}catch (Exception e) {
+	}finally {
+		reflectMethodInvoke();
+	}
+	return result;
+}
+public Object afterThrowingInvoke(MethodInvocation invocation) throws Exception {
+	Object result=null;
+	try {
+		result=invocation.proceed();
+	}catch (Exception e) {
+		reflectMethodInvoke();
+	}
 	return result;
 }
 public void reflectMethodInvoke() throws Exception {
