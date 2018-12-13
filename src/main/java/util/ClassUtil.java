@@ -13,11 +13,29 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
  
 public class ClassUtil {
- 
+	/**
+	 * 判断是否能赋值
+	 */
+	public static boolean checkType(Class<?> target,Class<?> input) {
+		while (input.getSuperclass()!=null) {
+			if(target.equals(input)) {
+				return true;
+			}
+			Class<?>[] interfaces=input.getInterfaces();
+			for(Class<?> intface:interfaces) {
+				if (intface.equals(target)) {
+					return true;
+				}
+			}
+			input=input.getSuperclass();
+		}
+		return false;
+	}
+
 	/**
 	 * 通过包名获取包内所有类
 	 * 
-	 * @param pkg
+	 * @param packageName
 	 * @return
 	 */
 	public static List<Class<?>> getAllClassByPackageName(String packageName) {

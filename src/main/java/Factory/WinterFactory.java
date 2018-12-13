@@ -9,19 +9,21 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.dom4j.Document;
-import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 
 import NamespaceHandler.WinterNamespaceHandler;
+import annotation.Autowired;
+import annotation.Resourced;
 import lifecycle.ApplicationContextAware;
 import lifecycle.BeanFactoryAware;
 import lifecycle.BeanNameAware;
 import lifecycle.BeanPostProcessor;
 import lifecycle.DisposableBean;
 import lifecycle.InitializingBean;
+import util.ClassUtil;
 
-public class WinterFactory {
+public class WinterFactory {//winter核心工厂类
 public static ArrayList<BeanPostProcessor>processorList=new ArrayList<BeanPostProcessor>();
 public static HashMap<String,Object> earlyBeans=new HashMap<String, Object>();
 public static HashMap<String,Object> singletonBeans=new HashMap<String, Object>();
@@ -32,7 +34,7 @@ static {
 	WinterNamespaceHandler.init();
 }
 @SuppressWarnings("unchecked")
-public static void parse(String path) {
+public static void parse(String path) {//解析配置文件,不同的element使用不同的XmlParser解析,最后都会解析为Beandefinition
 	 SAXReader reader=new SAXReader();
 	try {
 		Document document = reader.read(new File(path)); 
@@ -47,17 +49,17 @@ public static void parse(String path) {
 	}
 }
 public static void initBeans() {
-	for(String key:beanDefinitionMap.keySet()) {
+	for(String key:beanDefinitionMap.keySet()) {//先把Advisor的bean加载
 		if(!beanDefinitionMap.get(key).getIsToBean()&&beanDefinitionMap.get(key).getIsAdvisor()) {
 			initBean(beanDefinitionMap.get(key));
 		}
 	}
-	for(String key:beanDefinitionMap.keySet()) {
+	for(String key:beanDefinitionMap.keySet()) {//再把BeanPostProcessor的bean加载
 		if(!beanDefinitionMap.get(key).getIsToBean()&&beanDefinitionMap.get(key).getIsProcessor()) {
 			initBean(beanDefinitionMap.get(key));
 		}
 	}
-	for(String key:beanDefinitionMap.keySet()) {
+	for(String key:beanDefinitionMap.keySet()) {//最后加载其他bean
 		if(!beanDefinitionMap.get(key).getIsToBean()) {
 			initBean(beanDefinitionMap.get(key));
 		}
@@ -66,7 +68,7 @@ public static void initBeans() {
 }
 public static void initBean(BeanDefinition beanDefinition) {
 	try {
-		if(beanDefinition.getScope().equals("prototype")) {
+		if(beanDefinition.getScope().equals("prototype")&&beanDefinition.getIsToBean()==false) {
 			Class<?> beanClass=Class.forName(beanDefinition.getClassName());
 			Object bean=null;
 			if(beanDefinition.getConstructorInit()==0) {//不用构造函数，反射加载实例bean
@@ -91,7 +93,7 @@ public static void initBean(BeanDefinition beanDefinition) {
 					}
 				}
 			}
-			else {//使用构造函数,构造函数加载实例bean
+			else if(beanDefinition.getConstructorInit()==1) {//使用构造函数,构造函数加载实例bean
 				Class<?>[] parameterTypes=new Class<?>[beanDefinition.getAttributes().size()];
 				Object[] args=new Object[beanDefinition.getAttributes().size()];
 				int i=0;
@@ -120,6 +122,48 @@ public static void initBean(BeanDefinition beanDefinition) {
 			    bean=constructor.newInstance(args);
 			    earlyBeans.put(beanDefinition.getBeanName(),bean);//解决循环引用,把未完成加载的bean先放到earlyBeans中
 			}
+			else if(beanDefinition.getConstructorInit()==2) {//使用扫描方式注入bean
+				bean=Class.forName(beanDefinition.className).newInstance();
+				earlyBeans.put(beanDefinition.getBeanName(),bean);//解决循环引用,把未完成加载的bean先放到earlyBeans中
+				for(Field field:beanClass.getDeclaredFields()) {
+					if(field.isAnnotationPresent(Resourced.class)) {//若有Resourced注解
+						String name=field.getAnnotation(Resourced.class).name();
+						Object arg=null;
+	                	if(singletonBeans.containsKey(name)) {//从singletonBeans获取对应的实例
+	                		arg=singletonBeans.get(name);	
+						}
+						else if(earlyBeans.containsKey(name)) {//从earlyBeans获取对应的实例
+							arg=earlyBeans.get(name);	
+						}
+						else {//singletonBeans和earlyBeans都没有对应的实例,则加载对应的的实例到两个Beans集合中，再赋值
+							initBean(beanDefinitionMap.get(name));
+							arg=earlyBeans.get(name);
+						}
+	                	field.set(bean,arg);//反射设置值
+					}else if(field.isAnnotationPresent(Autowired.class)){//若有Autowired注解
+						Object matchBean=null;
+						for(String key:earlyBeans.keySet()) {
+							Object earlyBean=earlyBeans.get(key);
+							Class<?> targetType=field.getType();
+							if(ClassUtil.checkType(targetType, earlyBean.getClass())) {
+								matchBean=earlyBean;
+								field.set(bean,matchBean);//反射设置值
+								break;
+							}
+						}
+						if(matchBean==null) {
+							for(String key:beanDefinitionMap.keySet()) {
+								BeanDefinition definition=beanDefinitionMap.get(key);
+								if(!definition.equals(beanDefinition)&&ClassUtil.checkType(field.getType(), Class.forName(definition.getClassName()))) {
+									initBean(definition);
+									field.set(bean, earlyBeans.get(definition.getBeanName()));//反射设置值
+									break;
+								}
+							}	
+						}
+					}
+				}
+			}
 			bean=handleBeanAfterInit(beanDefinition, bean);//bean实例已经加载完成，继续完成bean的生命周期
 			beanDefinition.setIsToBean(true);
 			singletonBeans.put(beanDefinition.getBeanName(),bean);
@@ -137,7 +181,7 @@ public static Object convertValue(String type,String value) {//转换方法,待�
 	}
 	return value;
 }
-public static Object handleBeanAfterInit(BeanDefinition beanDefinition,Object bean) throws Exception {
+public static Object handleBeanAfterInit(BeanDefinition beanDefinition,Object bean) throws Exception {//声明周期方法
 	if(bean instanceof BeanNameAware) {
 		Method setBeanName=bean.getClass().getMethod("setBeanName",new Class<?>[]{String.class});
 		setBeanName.invoke(bean, new Object[]{beanDefinition.getBeanName()});
@@ -172,7 +216,7 @@ public static Object handleBeanAfterInit(BeanDefinition beanDefinition,Object be
 	}
 	return bean;
 }
-public static void close() {
+public static void close() {//关闭factory,调用destroy-method和destroy方法
 	try {
 	for(String key:beanDefinitionMap.keySet()) {
 		Object bean=singletonBeans.get(key);

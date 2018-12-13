@@ -18,4 +18,7 @@ public static void init(String path) {//指定winter配置文件
 	 WinterFactory.parse(path);
      WinterFactory.initBeans();
 }
+public static Object getBean(String key) {//从工厂获取单例bean
+	return WinterFactory.getSingletonBean(key);
+}
 }
