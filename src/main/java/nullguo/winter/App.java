@@ -13,8 +13,8 @@ public class App
     public static void main( String[] args )throws Exception
     {
         ApplicationContext.init();
-        System.out.println(WinterFactory.getSingletonBean("test1"));
-        System.out.println(WinterFactory.getSingletonBean("test3"));
+        System.out.println(ApplicationContext.getBean("test1"));
+        System.out.println(ApplicationContext.getBean("test3"));
         WinterFactory.close();
     }
 }

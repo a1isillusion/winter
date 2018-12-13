@@ -6,7 +6,7 @@ import annotation.Component;
 import annotation.Resourced;
 @Component
 public class ScanTest extends ComponentScanXmlParser{
-@Resourced(name="test1")
+@Autowired
 public Test test;
 
 @Override
