@@ -26,7 +26,9 @@ public static ArrayList<BeanPostProcessor>processorList=new ArrayList<BeanPostPr
 public static HashMap<String,Object> earlyBeans=new HashMap<String, Object>();
 public static HashMap<String,Object> singletonBeans=new HashMap<String, Object>();
 public static HashMap<String,BeanDefinition> beanDefinitionMap=new HashMap<String, BeanDefinition>();
+private static final WinterFactory instance;
 static {
+	instance=new WinterFactory();
 	WinterNamespaceHandler.init();
 }
 @SuppressWarnings("unchecked")
@@ -142,7 +144,7 @@ public static Object handleBeanAfterInit(BeanDefinition beanDefinition,Object be
 	}
 	if(bean instanceof BeanFactoryAware) {
 		Method setBeanFactory=bean.getClass().getMethod("setBeanFactroy",new Class<?>[]{WinterFactory.class});
-		setBeanFactory.invoke(bean, new Object[]{new WinterFactory()});
+		setBeanFactory.invoke(bean, new Object[]{getInstance()});
 	}
 	if(bean instanceof ApplicationContextAware) {
 		Method setApplicationContext=bean.getClass().getMethod("setApplicationContext",new Class<?>[]{ApplicationContext.class});
@@ -226,5 +228,8 @@ public static void setBeanDefinition(String key,BeanDefinition value) {
 }
 public static BeanDefinition getBeanDefinition(String key) {
 	return WinterFactory.beanDefinitionMap.get(key);
+}
+public static WinterFactory getInstance() {
+	return instance;
 }
 }

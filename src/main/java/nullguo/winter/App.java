@@ -1,6 +1,7 @@
 package nullguo.winter;
 
 
+import Factory.ApplicationContext;
 import Factory.WinterFactory;
 import aop.Advice;
 import aop.Advisor;
@@ -15,8 +16,7 @@ public class App
     public static void main( String[] args )
     {
         System.out.println( "Hello World!" );
-        WinterFactory.parse("C:/Users/Administrator/eclipse-workspace/winter/src/main/java/winter.xml");
-        WinterFactory.initBeans();
+        ApplicationContext.init();
         System.out.println(WinterFactory.getSingletonBean("test1"));
         System.out.println(WinterFactory.getSingletonBean("test3"));
         WinterFactory.close();
