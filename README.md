@@ -5,8 +5,8 @@ winter：一个模仿spring的轻量级框架,目前已经实现Spring的IOC,AOP
 
 配置完成后，该如何初始化？
 
-1.调用  ApplicationContext.init();(可以在自己指定winter.xml的路径,如Application.init(path);若不指定，默认winter.xml在根路径。)
+1.调用  ApplicationContext.init();(可以自己指定winter.xml的路径,如Application.init(path);若不指定，默认winter.xml存放在根路径。)
 
-2.调用ApplicationContext.getBean()获得单例bean。
+2.调用ApplicationContext.getBean(beanName)获得单例bean。
 
 3.Winter mvc功能待实现~
