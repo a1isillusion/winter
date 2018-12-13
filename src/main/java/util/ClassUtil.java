@@ -18,20 +18,27 @@ public class ClassUtil {
 	 */
 	public static boolean checkType(Class<?> target,Class<?> input) {
 		while (input.getSuperclass()!=null) {
-			if(target.equals(input)) {
+			if(target.equals(input)||checkInterface(target, input.getInterfaces())) {
 				return true;
-			}
-			Class<?>[] interfaces=input.getInterfaces();
-			for(Class<?> intface:interfaces) {
-				if (intface.equals(target)) {
-					return true;
-				}
 			}
 			input=input.getSuperclass();
 		}
 		return false;
 	}
-
+    public static boolean checkInterface(Class<?>target,Class<?>[]inputs) {
+    	if(inputs.length==0) {
+    		return false;
+    	}
+    	for(Class<?> input:inputs) {
+    		if(target.equals(input)) {
+    		return true;
+    	  }
+    		else {
+			return checkInterface(target, input.getInterfaces());
+		  }
+    	}
+    	return false;
+    }
 	/**
 	 * 通过包名获取包内所有类
 	 * 

@@ -1,26 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans>
-<component-scan base-package="nullguo.winter" />
+     <component-scan base-package="nullguo.winter" />
+     
      <bean name="test1" class="nullguo.winter.Test" init-method="initMethod" destroy-method="destroyMethod">
            <property name="a" value="astring"></property>
            <property name="b" value="18"></property>
            <property name="c" ref="test3"></property>
      </bean>
      <bean name="test2" class="nullguo.winter.Test">
-        <constructor-arg  type="java.lang.String" value="1"></constructor-arg>
-        <constructor-arg  type="java.lang.Integer" value="2"></constructor-arg>
+        <constructor-arg  type="java.lang.String" value="bString"></constructor-arg>
+        <constructor-arg  type="java.lang.Integer" value="19"></constructor-arg>
      </bean>
      <bean name="test3" class="nullguo.winter.Test">
            <property name="a" value="cstring"></property>
            <property name="b" value="20"></property>
            <property name="c" ref="test1"></property>
      </bean>
+     
      <bean name="aop" class="aop.AutoProxyCreater"></bean>
+     
      <aopconfig>
-        <aopaspect id="aop" class="nullguo.winter.AopTest">
-           <aoppointcut id="addAllMethod" expression="execution(* nullguo.winter.Test.toString(..))" />
+        <aopaspect id="aopaspect" class="nullguo.winter.AopTest">
+           <aoppointcut id="addAllMethod" expression="execution(* nullguo.*.*(..))" />
            <aopbefore method="before" pointcut-ref="addAllMethod" />
-           <aopafter method="before" pointcut-ref="addAllMethod" />
         </aopaspect>
       </aopconfig>
 </beans>

@@ -23,6 +23,9 @@ public boolean regexMatch(String regex,String input) {
 }
 public boolean pathMatch(Object targetObject,Method method) {
 	String scope=expression.split(" ")[0].replace("execution(", "").trim();//解析表达式范围
+	if(!scope.equals("*")) {//验证method范围是否匹配
+		return false;
+	}
 	String target=expression.split("\\(")[1].split(" ")[1];//解析表达式路径
 	String[]splitTarget=target.split("\\.");
 	List<String> regexList=new ArrayList<String>();
@@ -42,9 +45,13 @@ public boolean pathMatch(Object targetObject,Method method) {
 	boolean pathCheck=false;
 	int index=0;
 	for(;index<regexList.size()-1;index++) {
-		if(regexList.get(index).equals("*")) {
+		if(regexList.get(index).equals("*")&&index==regexList.size()-2) {
 			pathCheck=true;
-			break;
+			if(method!=null) {
+				return regexMatch(regexList.get(regexList.size()-1), method.getName())&&pathCheck;
+			}else {
+				return pathCheck;
+			}
 		}
 		if(regexMatch(regexList.get(index), splitClass[index])) {
 			continue;
