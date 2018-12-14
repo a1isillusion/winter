@@ -5,7 +5,7 @@ IOC：
 
 1.@Service @Component @Controller @Autowired @Resourced注解,使用 <component-scan base-package="package" />指定扫描包路径。
 
-2.常规方法,请参照winter.xml来进行<bean>配置进行注入。
+2.常规方法,请参考winter.xml来进行<bean>配置进行注入。
   
 AOP：
 
