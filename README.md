@@ -3,9 +3,9 @@ winter：一个模仿spring的轻量级框架,目前已经实现Spring的IOC,AOP
 
 IOC：
 
-1.@Service @Component @Controller @Autowired @Resourced注解,使用 <component-scan base-package="package" />指定扫描包路径。
+1.@Service @Component @Controller @Autowired @Resourced注解,使用component-scan指定扫描包路径。
 
-2.常规方法,请参考winter.xml来进行<bean>配置进行注入。
+2.常规方法,请参考winter.xml来进行bean配置注入。
   
 AOP：
 
